@@ -13,16 +13,19 @@
 import jsonpatch from 'fast-json-patch';
 import Route from './route.model';
 import Event from '../event/event.model';
+import Volunteer from '../volunteer/volunteer.model';
 import _ from 'lodash';
 import mongoose from 'mongoose';
 Route.schema.tree.state.enum
 
 function saveUpdates(updates) {
-  return function(route) {
-    if (!route) return null;
-    var updated = _.merge(route, updates);
-    let families = [],
-      volunteers = [];
+  return function (route) {
+    if (!route) {
+      return null;
+    }
+    var updated    = _.merge(route, updates);
+    let families   = [],
+        volunteers = [];
     updates.families && updates.families.forEach(f => {
       families.push(mongoose.Types.ObjectId(f._id))
     })
@@ -43,7 +46,7 @@ function saveUpdates(updates) {
 
 function respondWithResult(res, statusCode) {
   statusCode = statusCode || 200;
-  return function(entity) {
+  return function (entity) {
     if (entity) {
       return res.status(statusCode).json(entity);
     }
@@ -52,7 +55,7 @@ function respondWithResult(res, statusCode) {
 }
 
 function patchUpdates(patches) {
-  return function(entity) {
+  return function (entity) {
     try {
       jsonpatch.apply(entity, patches, /*validate*/ true);
     } catch (err) {
@@ -64,7 +67,7 @@ function patchUpdates(patches) {
 }
 
 function removeEntity(res) {
-  return function(entity) {
+  return function (entity) {
     if (entity) {
       return entity.remove()
         .then(() => {
@@ -75,7 +78,7 @@ function removeEntity(res) {
 }
 
 function handleEntityNotFound(res) {
-  return function(entity) {
+  return function (entity) {
     if (!entity) {
       res.status(404).end();
       return null;
@@ -86,7 +89,7 @@ function handleEntityNotFound(res) {
 
 function handleError(res, statusCode) {
   statusCode = statusCode || 500;
-  return function(err) {
+  return function (err) {
     console.error('err', err);
     res.status(statusCode).send(err);
   };
@@ -123,10 +126,10 @@ export function upsert(req, res) {
     delete req.body._id;
   }
   return Route.findOneAndUpdate(req.params.id, req.body, {
-      upsert: true,
-      setDefaultsOnInsert: true,
-      runValidators: true
-    }).exec()
+    upsert: true,
+    setDefaultsOnInsert: true,
+    runValidators: true
+  }).exec()
     .then(e => {
       console.log('after', e);
       return e;
@@ -158,8 +161,8 @@ export function destroy(req, res) {
 
 export function showByParent(req, res) {
   return Route.find({
-      parent: req.params.id
-    }).exec()
+    parent: req.params.id
+  }).exec()
     .then(handleEntityNotFound(res))
     .then(respondWithResult(res))
     .catch(handleError(res));
@@ -174,11 +177,18 @@ export function addToSet(req, res) {
     .catch(handleError(res));
 }
 
-export function showNoAuthRoute(req, res){
-  if(req.params.phone){
-
+export function showNoAuthRoute(req, res) {
+  if (req.params.phone) {
+    return Volunteer.findOne({
+      phoneNumber: req.params.phone
+    })
+      .exec()
+      .then(handleEntityNotFound(res))
+      .then(findRouteForVolunteerId)
+      .then(handleEntityNotFound(res))
+      .then(respondWithResult(res))
   }
-  else if(req.params.id){
+  else if (req.params.id) {
     return Route.findById(req.params.id)
       .populate('volunteers')
       .populate('families')
@@ -191,9 +201,11 @@ export function showNoAuthRoute(req, res){
 }
 
 function validateState(updates, res) {
-  const enumeration = (Route.schema.tree && Route.schema.tree.state && Route.schema.tree.state.enum) ? Route.schema.tree.state.enum : undefined;
-  return function(entity) {
-    if (updates.state && enumeration && enumeration.indexOf(updates.state) >= enumeration.indexOf(entity.state)) {
+  const enumeration = (Route.schema.tree && Route.schema.tree.state &&
+                       Route.schema.tree.state.enum) ? Route.schema.tree.state.enum : undefined;
+  return function (entity) {
+    if (updates.state && enumeration &&
+        enumeration.indexOf(updates.state) >= enumeration.indexOf(entity.state)) {
       return entity;
     }
     res.status(401).end();
@@ -202,16 +214,35 @@ function validateState(updates, res) {
 }
 
 function removeFromEvent(routeToRemove) {
-  if (!routeToRemove) return null
+  if (!routeToRemove) {
+    return null
+  }
 
   return Event.update({
-      _id: mongoose.Types.ObjectId(routeToRemove.parent)
-    }, {
-      $pull: {
-        routes: mongoose.Types.ObjectId(routeToRemove._id)
-      }
-    })
+    _id: mongoose.Types.ObjectId(routeToRemove.parent)
+  }, {
+    $pull: {
+      routes: mongoose.Types.ObjectId(routeToRemove._id)
+    }
+  })
     .then(_ => {
       return routeToRemove
     })
+}
+
+
+function findRouteForVolunteerId(volunteer) {
+  if (!volunteer) {
+    return null;
+  }
+  return Route.findOne({
+    volunteers: {
+      $in: [
+        mongoose.Types.ObjectId(volunteer._id)
+      ]
+    }
+  })
+    .populate('volunteers')
+    .populate('families')
+    .exec()
 }

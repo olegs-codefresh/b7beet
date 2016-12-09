@@ -6,14 +6,20 @@ export class RouteDataController {
     const ctrl = this;
     ctrl.$window = $window;
     ctrl.route = {};
-    // TODO: in case that route not found return to search page
-    if($stateParams.id == 'oleg')
-      $state.go('route.search')
-    routeService.getRouteWithId($stateParams.id)
-    .then(route => {
-      ctrl.route = route;
-    })
+    if($stateParams.route){
+      ctrl.route = $stateParams.route;
+    }
+    else {
+      // TODO: in case that route not found return to search page
+      if (!$stateParams.id)
+        return $state.go('route.search')
+      routeService.getRouteWithId($stateParams.id)
+        .then(route => {
+          ctrl.route = route;
+        })
+    }
   }
+
   waze(family){
     this.$window.location.href ='http://waze.to/?ll=' + family.address.latlng.lat + ',' + family.address.latlng.lng +  '&navigate=yes'
   }

@@ -13,6 +13,9 @@ export default function routes($stateProvider) {
   })
   .state('route.id', {
     url: '/:id',
-    template: '<route-data></route-data>'
+    template: '<route-data></route-data>',
+    params: {
+      route: null
+    }
   });
 };

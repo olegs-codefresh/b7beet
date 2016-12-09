@@ -2,7 +2,7 @@
 /**
  * This service is encapsulate all the rest requet to the server
  */
- function networkService($http, $location) {
+ function networkService($http, $location, Notification) {
   //  const _ = lodash;
    var Util = {
      /**
@@ -46,6 +46,7 @@
 
    return Util;
    function handleResponse(response){
+     if(!response) return;
      let code = response.status;
      if      (_.inRange(code, 200, 299)) return responseSuccess(response)
      else if (_.inRange(code, 300, 399)) return redirect(response)
@@ -83,5 +84,5 @@
 
 export default {
   name: 'networkService',
-  service: ['$http', '$location', networkService]
+  service: ['$http', '$location', 'Notification', networkService]
 }

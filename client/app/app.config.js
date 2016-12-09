@@ -16,3 +16,4 @@ export function cacheConfig(CacheFactoryProvider) {
     storageMode: 'sessionStorage'
   });
 }
+

@@ -44,22 +44,64 @@ import loaderModule from '../components/loader/loader.module';
 import './app.scss';
 
 angular.module('b7beetApp', [
-    ngAnimate,
-    ngCookies, ngResource, ngSanitize, 'btford.socket-io', uiRouter, uiBootstrap,
-    // ngMessages,
-    ngMap, 'ngAutocomplete', accordion, cardModule, angularFx, mdIcons, notification, clipBoard, angularCache,
-    // ngValidationMatch,
-    _Auth, account, admin, navbar, footer, main, constants, socket, util,
-    family, volunteer, eventModule, loaderModule, stickyIcon, routeModule
-  ])
+  ngAnimate,
+  ngCookies,
+  ngResource,
+  ngSanitize,
+  'btford.socket-io',
+  uiRouter,
+  uiBootstrap,
+  // ngMessages,
+  ngMap,
+  'ngAutocomplete',
+  accordion,
+  cardModule,
+  angularFx,
+  mdIcons,
+  notification,
+  clipBoard,
+  angularCache,
+  // ngValidationMatch,
+  _Auth,
+  account,
+  admin,
+  navbar,
+  footer,
+  main,
+  constants,
+  socket,
+  util,
+  family,
+  volunteer,
+  eventModule,
+  loaderModule,
+  stickyIcon,
+  routeModule
+])
+  .config(($httpProvider) => {
+    'ngInject';
+    $httpProvider.interceptors.push("httpRequestInterceptorFactory");
+  })
+  .factory('httpRequestInterceptorFactory', function ($rootScope) {
+    'ngInject';
+    return {
+      'responseError': function (rejection) {
+        // do something on error
+        if (rejection.status === 404) {
+          $rootScope.$broadcast('404', rejection)
+        }
+        return;
+      }
+    };
+  })
   .config(routeConfig)
   .config(cacheConfig)
-  .run(function($rootScope, $location, Auth) {
+  .run(function ($rootScope, $location, Auth) {
     'ngInject';
     // Redirect to login if route requires auth and you're not logged in
 
-    $rootScope.$on('$stateChangeStart', function(event, next) {
-      Auth.isLoggedIn(function(loggedIn) {
+    $rootScope.$on('$stateChangeStart', function (event, next) {
+      Auth.isLoggedIn(function (loggedIn) {
         if (next.authenticate && !loggedIn) {
           $location.path('/login');
         }
@@ -73,3 +115,4 @@ angular.element(document)
       strictDi: true
     });
   });
+
