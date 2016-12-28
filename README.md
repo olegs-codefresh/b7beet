@@ -1,4 +1,7 @@
--[![Stories in Ready](https://badge.waffle.io/olsynt/b7beet.png?label=ready&title=Ready)](https://waffle.io/olsynt/b7beet)
+-[![Codefresh build status](https://g-load.codefresh.io/api/badges/build?branch=master&repoName=b7beet&repoOwner=olsynt&pipelineName=b7beet&accountName=olsynt)](https://g-load.codefresh.io/repositories/olsynt/b7beet/builds?filter=trigger:build;branch:master)
+
+
+[![Stories in Ready](https://badge.waffle.io/olsynt/b7beet.png?label=ready&title=Ready)](https://waffle.io/olsynt/b7beet)
 
 # b7beet
 
